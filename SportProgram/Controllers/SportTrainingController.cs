@@ -6,10 +6,12 @@ using Infrastructure.DTO;
 using Infrastructure.Interfaces;
 using Infrastructure.Queries.GetAllSportTraining;
 using Infrastructure.Queries.GetByIdSportTraining;
+using Infrastructure.Queries.GetCurrentUser;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace SportProgram.Controllers
 {
@@ -20,13 +22,15 @@ namespace SportProgram.Controllers
         private readonly ICommandDispatcher _commandDispatcher;
         private readonly IGetByIdSportTrainingQuery _getByIdSportTrainingQuery;
         private readonly IGetAllSportTrainingQuery _getAllSportTrainingQuery;
+        private readonly IGetCurrentUserQuery _getCurrentUserQuery;
 
         public SportTrainingController(ICommandDispatcher commandDispatcher, IGetByIdSportTrainingQuery getByiIdSportTrainingQuery,
-                                       IGetAllSportTrainingQuery getAllSportTrainingQuery)
+                                       IGetAllSportTrainingQuery getAllSportTrainingQuery, IGetCurrentUserQuery getCurrentUserQuery)
         {
             _commandDispatcher = commandDispatcher;
             _getByIdSportTrainingQuery = getByiIdSportTrainingQuery;
             _getAllSportTrainingQuery = getAllSportTrainingQuery;
+            _getCurrentUserQuery = getCurrentUserQuery;
         }
 
         [HttpGet]
@@ -51,9 +55,12 @@ namespace SportProgram.Controllers
         [HttpPost]
         [Route("CreateSportTraining")]
         [ProducesResponseType(typeof(SportTrainingIdDto), (int)HttpStatusCode.OK)]
-        public IActionResult Create(AddSportTrainingDto sportTraining)
+        public async Task<IActionResult> Create(AddSportTrainingDto sportTraining)
         {
-            var command = new AddSportTrainingCommand(sportTraining.Title);
+            var filter = new GetCurrentUserFilter(HttpContext.User);
+            var user = await _getCurrentUserQuery.ExecuteAsync(filter);
+
+            var command = new AddSportTrainingCommand(sportTraining.Title, user.Id, user.UserName);
             var result = _commandDispatcher.Handle<AddSportTrainingCommand, SportTrainingIdDto>(command);
             return Ok(result);
         }

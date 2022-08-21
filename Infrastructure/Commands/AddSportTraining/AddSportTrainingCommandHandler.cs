@@ -21,7 +21,7 @@ namespace Infrastructure.Commands.AddSportTraining
 
         public SportTrainingIdDto Handle(AddSportTrainingCommand command)
         {
-            var sportTraining = new SportTraining(Guid.NewGuid(), command.Title);
+            var sportTraining = new SportTraining(Guid.NewGuid(), command.Title, command.UserId, command.UserName);
             _repo.Create(sportTraining);
             _repo.Save();
             return new SportTrainingIdDto() { Id = sportTraining.Id };
